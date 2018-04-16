@@ -3,14 +3,13 @@ var Schema = mongoose.Schema;
 
 var ProductSchema = new Schema({
 	name: String,
-	sku: { type: String /*, index: { unique: true } */ },
+	sku: { type: String/*, index: { unique: true }*/ },
 	categoryName: String,
 	regularPrice: Number,
 	salePrice: Number,
 	thumbnailImage: String
-
-});
-
-//ProductSchema.index({ sku: 1 });
+}, {
+		versionKey: false // Disable _v
+	});
 
 module.exports = mongoose.model('Product', ProductSchema);

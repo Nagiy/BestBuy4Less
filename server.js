@@ -17,21 +17,6 @@ app.use(bodyParser.json());
 
 var port = process.env.PORT || 8080; // set our port
 
-// DATABASE SETUP
-var mongoose = require('mongoose');
-//mongoose.connect('mongodb://survivor:Letmein2@ds149144.mlab.com:49144/survivor_db', { autoIndex: false }); // connect to remote database
-mongoose.connect('mongodb://localhost:27017/bestbuy'); // connect to local database
-
-// Handle the connection event
-var db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-
-db.once('open', function () {
-	console.log("DB connection alive");
-});
-
-// Product models lives here
-var Product = require('./app/models/product');
 
 // ROUTES FOR OUR API
 // =============================================================================
@@ -69,7 +54,6 @@ router.use(function (req, res, next) {
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function (req, res) {
-	setup.initProductsFromBestBuy();
 	res.json({ message: 'hooray! welcome to our api!' });
 });
 
