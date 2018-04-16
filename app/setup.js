@@ -9,7 +9,8 @@ db.on('error', console.error.bind(console, 'connection error:'));
 
 db.once('open', function () {
   console.log("DB connection alive");
-  initProductsFromBestBuy();
+  //initProductsFromBestBuy();
+  removeDuplicates();
 });
 
 var request = require('request');
@@ -119,11 +120,26 @@ getData(url).then(function (data) {
 }
 
 removeDuplicates = function () {
-  Product.aggregate([{ $group: { _id: "$sku", count: { $sum: 1 } } }, { $match: { count: { "$gt": 1 } } }], function (err, result) {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    console.log(result);
-  });
+  Product.aggregate([{
+    $group: { _id: "$sku", uniqueIds: { $addToSet: "$_id" }, count: { $sum: 1 } }
+  }, {
+    $match: { count: { "$gt": 1 } }
+  }]).option({ allowDiskUse: true }).exec(
+    function (err, result) {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      dups = result.map(function (el) {
+        return el.uniqueIds[0];
+      });
+      Product.deleteMany({ _id: { $in: dups } })
+        .then(function (docs, err) {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(`Successfully deleted all duplicates`);
+          }
+        });
+    });
 }
