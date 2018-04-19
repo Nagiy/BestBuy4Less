@@ -109,14 +109,6 @@ initProductsFromBestBuy = function () {
         initProducts(docs, 0, 1);
       }
     });
-  /*
-url = `https://api1.bestbuy.ca/v2/json/category/`
-getData(url).then(function (data) {
-  if (data && data.subCategories && data.subCategories.length > 0) {
-    console.log(`Processing category ${data.subCategories[0].id}`);
-    initProducts(data.subCategories, 0, 1);
-  }
-}, err => console.log(err));*/
 }
 
 removeDuplicates = function () {
@@ -130,7 +122,7 @@ removeDuplicates = function () {
         console.log(err);
         return;
       }
-      dups = result.map(function (el) {
+      let dups = result.map(function (el) {
         return el.uniqueIds[0];
       });
       Product.deleteMany({ _id: { $in: dups } })
