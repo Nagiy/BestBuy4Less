@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>JavaScript Shield UI Demos</title>
+  <link id="themecss" rel="stylesheet" type="text/css" href="css/shieldui-lite-grid.min.css" />
+  <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="js/shieldui-lite-core.min.js"></script>
+  <script type="text/javascript" src="js/shieldui-lite-grid.min.js"></script>
+</head>
+
+<body class="theme-light">
+  <div id="grid"></div>
+  <script type="text/javascript">
+    $(function () {
+      $("#grid").shieldGrid({
+        dataSource: {
+          remote: {
+            read: {
+              url: "/api/products",
+              dataType: "json",
+              operations: ["sort", "skip", "take"],
+              data: function (params) {
+                //params.take = 1000;
+                var odataParams = {};
+                if (params.sort && params.sort.length) {
+                  odataParams["$orderby"] = window.orderFields[params.sort[0].path].path + (params.sort[0].desc ? " desc" : "");
+                }
+                if (params.skip != null) {
+                  odataParams["$skip"] = params.skip;
+                }
+                if (params.take != null) {
+                  odataParams["$top"] = params.take;
+                }
+                return odataParams;
+              }
+            },
+            cache: true
+          },
+          take: 1000,
+          schema: {
+            data: "value",
+            total: function (result) {
+              return result["count"];
+            },
+            fields: window.orderFields = {
+              "Name": { path: "name" },
+              "Price": { path: "regularPrice" },
+              "Sale": { path: "salePrice" },
+              "SKU": { path: "sku" },
+              "Image": { path: "thumbnailImage" }
+            }
+          }
+        },
+        height: 700,
+        scrolling: {
+          virtual: true
+        },
+        sorting: true,
+        columns: [
+          {
+            field: "Name",
+            width: 600,
+            columnTemplate: function (cell, item, index) {
+              if (!item.Name)
+                return `<div style="width:100%; height:150px;">`;
+              cell[0].innerHTML =
+                `<div style="width:100%; height:150px;">
+                  <img style="float:left; height=150px;" src="${item.Image}"/>
+                  ${item.Name}
+                </div>`;
+            }
+          },
+          { field: "Price", width: 80 },
+          { field: "Sale", width: 80 },
+          { field: "SKU", width: 100 }
+        ]
+      });
+    });
+  </script>
+</body>
+
+</html>

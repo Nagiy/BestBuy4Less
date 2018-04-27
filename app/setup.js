@@ -10,7 +10,8 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function () {
   console.log("DB connection alive");
   //initProductsFromBestBuy();
-  removeDuplicates();
+  //removeDuplicates();
+  //getChangedProducts();
 });
 
 var request = require('request');
@@ -63,7 +64,7 @@ initCategories = function (parentCategory = "") {
   }, err => console.log(err));
 }
 
-initProducts = function (categories, index, page) {
+initProducts = function (categories, index = 0, page = 1) {
   categoryid = categories[index].id;
   url = `https://api1.bestbuy.ca/v2/json/search?categoryid=${categoryid}&page=${page}&pageSize=100`;
   getData(url).then(function (data) {
@@ -86,7 +87,7 @@ initProducts = function (categories, index, page) {
       index++;
       if (index < categories.length) {
         console.log(`Processing category ${categories[index].id}`);
-        setTimeout(() => initProducts(categories, index, 1), 100);
+        setTimeout(() => initProducts(categories, index), 100);
       } else {
         console.log(`Processing Complete!`);
       }
@@ -106,7 +107,7 @@ initProductsFromBestBuy = function () {
         console.log(err);
       } else {
         console.log(`Processing category ${docs[0].id}`);
-        initProducts(docs, 0, 1);
+        initProducts(docs);
       }
     });
 }
@@ -134,4 +135,27 @@ removeDuplicates = function () {
           }
         });
     });
+}
+
+function getChangedProducts() {
+  Product.aggregate([
+    { $lookup: { from: "firstProducts", localField: "sku", foreignField: "sku", as: "result" } },
+    { $unwind: "$result" },
+    { $match: { $expr: { $ne: ["$result.salePrice", "$salePrice"] } } }
+  ]).exec(
+    function (err, result) {
+      if (err) {
+        console.log(err);
+        return;
+      }
+    });
+}
+
+module.exports = {
+  getProducts: function (skip, limit, cb) {
+    return Product.find()
+      .limit(limit)
+      .skip(skip)
+      .exec(cb);
+  }
 }

@@ -3,6 +3,7 @@
 
 // call the packages we need
 var express = require('express');
+var compression = require('compression')
 var bodyParser = require('body-parser');
 var app = express();
 var setup = require('./app/setup');
@@ -17,13 +18,15 @@ app.use(bodyParser.json());
 
 var port = process.env.PORT || 8080; // set our port
 
+// compress all responses
+app.use(compression());
 
 // ROUTES FOR OUR API
 // =============================================================================
 
 // create our router
 var router = express.Router();
-
+/*
 // middleware to use for all requests
 router.use(function (req, res, next) {
 	// do logging
@@ -51,7 +54,7 @@ router.use(function (req, res, next) {
 	//console.log(`${res.output}`);
 	next();
 });
-
+*/
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function (req, res) {
 	res.json({ message: 'hooray! welcome to our api!' });
@@ -60,31 +63,45 @@ router.get('/', function (req, res) {
 // on routes that end in /products
 // ----------------------------------------------------
 router.route('/products')
-
-	// create a product (accessed at POST http://localhost:8080/products)
-	.post(function (req, res) {
-
-		var product = new Product();		// create a new instance of the Product model
-		product.name = req.body.name;  // set the products name (comes from the request)
-
-		product.save(function (err, product) {
-			if (err)
-				res.send(err);
-
-			res.json({ message: 'Product created!' });
-		});
-	})
-
+	/*
+		// create a product (accessed at POST http://localhost:8080/products)
+		.post(function (req, res) {
+	
+			var product = new Product();		// create a new instance of the Product model
+			product.name = req.body.name;  // set the products name (comes from the request)
+	
+			product.save(function (err, product) {
+				if (err)
+					res.send(err);
+	
+				res.json({ message: 'Product created!' });
+			});
+		})
+	*/
 	// get all the products (accessed at GET http://localhost:8080/api/products)
 	.get(function (req, res) {
-		Product.find(function (err, products) {
+		let limit = Number(req.query.$top) || 0, count = 652493;
+		let skip = Number(req.query.$skip) || 0;
+		if (!limit) {
+			res.json({
+				count: count,
+				value: []
+			});
+			return;
+		}
+		setup.getProducts(skip, limit, function (err, products) {
 			if (err)
 				res.send(err);
 
-			res.json(products);
+			let result = {
+				count: count,
+				value: products
+			}
+
+			res.json(result);
 		});
 	});
-
+/*
 // on routes that end in /products/:product_id
 // ----------------------------------------------------
 router.route('/products/:product_id')
@@ -127,9 +144,11 @@ router.route('/products/:product_id')
 			res.json({ message: 'Successfully deleted' });
 		});
 	});
-
+*/
 
 // REGISTER OUR ROUTES -------------------------------
+
+app.use(express.static(__dirname + '/public'));
 app.use('/api', router);
 
 // START THE SERVER
